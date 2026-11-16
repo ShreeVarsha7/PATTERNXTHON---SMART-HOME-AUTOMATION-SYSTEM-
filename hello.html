@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartHome | Automation System</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: Inter, Arial, sans-serif;
+  background:#0c1220;
+  color:#edf2ff;
+  min-height:100vh;
+}
+.app { display:flex; min-height:100vh; }
+.sidebar {
+  width:240px; background:#111a2c; padding:28px 18px;
+  border-right:1px solid #26334a; flex-shrink:0;
+}
+.logo { font-size:21px; font-weight:800; margin-bottom:40px; }
+.logo span { color:#65a9ff; }
+.nav-title { color:#77869e; font-size:11px; margin:25px 10px 12px; }
+.nav-item {
+  padding:13px; margin:5px 0; border-radius:9px;
+  color:#aab7cc; cursor:pointer; font-size:14px;
+}
+.nav-item.active,.nav-item:hover {
+  background:#243b60; color:white;
+}
+.main { flex:1; padding:30px; min-width:0; }
+.topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:15px; margin-bottom:30px;
+}
+h1 { font-size:26px; }
+.subtitle { color:#8795aa; font-size:13px; margin-top:7px; }
+.hub {
+  background:#183a36; border:1px solid #286b59;
+  color:#7af0c0; padding:10px 15px; border-radius:30px;
+  font-size:12px;
+}
+.stats {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:16px; margin-bottom:25px;
+}
+.card {
+  background:#151f32; border:1px solid #27364e;
+  border-radius:14px; padding:20px;
+}
+.stat-label { color:#91a0b8; font-size:13px; }
+.stat-value { font-size:29px; font-weight:700; margin-top:12px; }
+.stat-icon { font-size:22px; margin-bottom:15px; }
+.section-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin:28px 0 15px; gap:10px;
+}
+h2 { font-size:18px; }
+.muted { color:#8795aa; font-size:12px; }
+.devices {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.device { transition:.2s; }
+.device:hover { border-color:#5089cb; transform:translateY(-2px); }
+.device-top { display:flex; justify-content:space-between; align-items:center; }
+.device-icon { font-size:27px; }
+.status {
+  font-size:11px; padding:5px 9px; border-radius:20px;
+  background:#243b35; color:#73e6b3;
+}
+.status.off { background:#392a30; color:#f18b9b; }
+.device h3 { font-size:16px; margin:17px 0 5px; }
+.device p { font-size:12px; color:#8e9cb2; }
+.device-controls { margin-top:19px; }
+button,select,input { font:inherit; }
+button {
+  cursor:pointer; border:0; border-radius:8px;
+  padding:10px 15px; background:#357de0; color:white;
+}
+button:hover { filter:brightness(1.15); }
+.toggle { width:100%; background:#294b75; }
+.toggle.off { background:#394357; color:#b8c3d3; }
+.control-row {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:13px; font-size:12px; color:#aab7cc;
+}
+input[type=range] { width:100%; accent-color:#5b9cf0; margin-top:12px; }
+input[type=color] { width:38px; height:28px; border:0; background:none; }
+input[type=number], input[type=text], select {
+  background:#202c41; color:white; border:1px solid #394b65;
+  border-radius:7px; padding:9px; width:100%;
+}
+select { width:auto; }
+.rules { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+.rule {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+}
+.rule h3 { font-size:14px; margin-bottom:6px; }
+.rule p { color:#8998ae; font-size:12px; }
+.switch {
+  width:43px; height:24px; border-radius:20px;
+  background:#455168; position:relative; cursor:pointer; flex-shrink:0;
+}
+.switch:after {
+  content:""; width:18px; height:18px; background:white;
+  border-radius:50%; position:absolute; top:3px; left:3px;
+  transition:.2s;
+}
+.switch.on { background:#347de0; }
+.switch.on:after { left:22px; }
+.bottom-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:16px;
+  margin-top:25px;
+}
+.log-item {
+  border-bottom:1px solid #28354a; padding:13px 0;
+  font-size:12px; color:#b7c4d8;
+}
+.log-item:last-child { border:0; }
+.log-item small { display:block; color:#74849c; margin-top:5px; }
+.add-btn { font-size:12px; padding:9px 13px; }
+#toast {
+  position:fixed; bottom:25px; right:25px; background:#254d44;
+  color:#9bf2cd; padding:13px 20px; border-radius:10px;
+  display:none; z-index:5; font-size:13px;
+}
+.modal {
+  display:none; position:fixed; inset:0; background:#000a;
+  align-items:center; justify-content:center; padding:20px; z-index:4;
+}
+.modal-box {
+  background:#172338; padding:25px; border:1px solid #344663;
+  border-radius:14px; width:100%; max-width:390px;
+}
+.modal-box h2 { margin-bottom:18px; }
+.modal-box label { display:block; font-size:12px; margin:14px 0 7px; color:#aab7cc; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.modal-actions button { flex:1; }
+.secondary { background:#38465d; }
+@media(max-width:950px) {
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .devices { grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:650px) {
+  .sidebar { width:65px; padding:20px 8px; }
+  .logo { font-size:0; text-align:center; }
+  .logo span { font-size:21px; }
+  .nav-item { font-size:0; text-align:center; padding:14px 4px; }
+  .nav-title { display:none; }
+  .main { padding:18px 12px; }
+  .devices,.rules,.bottom-grid { grid-template-columns:1fr; }
+  h1 { font-size:20px; }
+  .hub { font-size:10px; padding:8px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">⌂ <span>SmartHome</span></div>
+  <div class="nav-title">MAIN MENU</div>
+  <div class="nav-item active" onclick="navigate('Dashboard')">▦ Dashboard</div>
+  <div class="nav-item" onclick="navigate('Devices')">◉ Devices</div>
+  <div class="nav-item" onclick="navigate('Automation')">⚙ Automation</div>
+  <div class="nav-item" onclick="navigate('Activity')">◷ Activity Logs</div>
+  <div class="nav-title">SYSTEM</div>
+  <div class="nav-item" onclick="showToast('Central Hub is online')">◎ Central Hub</div>
+  <div class="nav-item" onclick="showToast('Settings are ready')">⚙ Settings</div>
+  <div class="nav-item" onclick="showToast('Demo user: Admin')">♙ User Profile</div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1 id="pageTitle">Smart Home Dashboard</h1>
+      <p class="subtitle">Welcome back! Here's your home overview.</p>
+    </div>
+    <div class="hub">● HUB ONLINE</div>
+  </header>
+
+  <section class="stats">
+    <div class="card">
+      <div class="stat-icon">▦</div>
+      <div class="stat-label">Total Devices</div>
+      <div class="stat-value" id="total">3</div>
+    </div>
+    <div class="card">
+      <div class="stat-icon">🟢</div>
+      <div class="stat-label">Online Devices</div>
+      <div class="stat-value" id="online">3</div>
+    </div>
+    <div class="card">
+      <div class="stat-icon">💡</div>
+      <div class="stat-label">Active Devices</div>
+      <div class="stat-value" id="active">1</div>
+    </div>
+    <div class="card">
+      <div class="stat-icon">⚙</div>
+      <div class="stat-label">Automation Rules</div>
+      <div class="stat-value" id="ruleCount">2</div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>My Smart Devices</h2>
+      <p class="muted">Manage your connected devices</p>
+    </div>
+    <button class="add-btn" onclick="showToast('Device registration simulated')">+ Add Device</button>
+  </div>
+
+  <section class="devices">
+
+    <div class="card device">
+      <div class="device-top">
+        <div class="device-icon">💡</div>
+        <span class="status" id="lightStatus">ONLINE</span>
+      </div>
+      <h3>Living Room Light</h3>
+      <p>LightDevice · Device ID: LD001</p>
+      <div class="device-controls">
+        <button class="toggle" id="lightToggle" onclick="toggleDevice('light')">Turn OFF</button>
+        <div class="control-row">
+          <span>Brightness</span><span id="brightnessValue">70%</span>
+        </div>
+        <input type="range" min="0" max="100" value="70"
+          id="brightness" oninput="setBrightness(this.value)">
+        <div class="control-row">
+          <span>Light Color</span>
+          <input type="color" value="#f6d365" id="color"
+            onchange="showToast('Light color changed')">
+        </div>
+      </div>
+    </div>
+
+    <div class="card device">
+      <div class="device-top">
+        <div class="device-icon">🌡️</div>
+        <span class="status" id="thermoStatus">ONLINE</span>
+      </div>
+      <h3>Bedroom Thermostat</h3>
+      <p>ThermostatDevice · Device ID: TD001</p>
+      <div class="device-controls">
+        <button class="toggle off" id="thermoToggle"
+          onclick="toggleDevice('thermo')">Turn ON</button>
+        <div class="control-row">
+          <span>Target Temperature</span>
+          <strong id="tempValue">24°C</strong>
+        </div>
+        <input type="range" min="16" max="32" value="24"
+          id="temperature" oninput="setTemperature(this.value)">
+        <div class="control-row">
+          <span>Mode</span>
+          <select onchange="showToast('Thermostat mode updated')">
+            <option>Auto</option>
+            <option>Cooling</option>
+            <option>Heating</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card device">
+      <div class="device-top">
+        <div class="device-icon">🔌</div>
+        <span class="status">ONLINE</span>
+      </div>
+      <h3>Smart Plug</h3>
+      <p>SmartDevice · Device ID: SD001</p>
+      <div class="device-controls">
+        <button class="toggle off" id="plugToggle"
+          onclick="toggleDevice('plug')">Turn ON</button>
+        <p class="muted" style="margin-top:15px">
+          Connected to CentralHub
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>Automation Rules</h2>
+      <p class="muted">Automatically control your smart devices</p>
+    </div>
+    <button class="add-btn" onclick="openModal()">+ Create Rule</button>
+  </div>
+
+  <section class="rules" id="rules">
+    <div class="card rule">
+      <div>
+        <h3>🌙 Night Mode</h3>
+        <p>At 10 PM → Turn OFF living room light</p>
+      </div>
+      <div class="switch on" onclick="toggleRule(this)"></div>
+    </div>
+    <div class="card rule">
+      <div>
+        <h3>🌡️ Temperature Control</h3>
+        <p>Temperature above 28°C → Cooling</p>
+      </div>
+      <div class="switch on" onclick="toggleRule(this)"></div>
+    </div>
+  </section>
+
+  <section class="bottom-grid">
+    <div class="card">
+      <h2>Central Hub</h2>
+      <p class="muted" style="margin-top:8px">Main system controller</p>
+      <div class="log-item">Hub ID <span style="float:right">HUB001</span></div>
+      <div class="log-item">Firmware <span style="float:right">v2.1.0</span></div>
+      <div class="log-item">Connection <span style="float:right;color:#72e8b5">Connected</span></div>
+      <div class="log-item">Communication <span style="float:right">Active</span></div>
+    </div>
+    <div class="card">
+      <h2>Recent Activity</h2>
+      <p class="muted" style="margin-top:8px">Latest system events</p>
+      <div id="activity">
+        <div class="log-item">💡 Living Room Light turned ON<small>Just now</small></div>
+        <div class="log-item">◎ Central Hub connected<small>System startup</small></div>
+        <div class="log-item">⚙ Automation rules loaded<small>System startup</small></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center;margin-top:30px">
+    SmartHome Automation System · Demo Version 1.0
+  </p>
+</main>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal" id="ruleModal">
+  <div class="modal-box">
+    <h2>Create Automation Rule</h2>
+    <label>Rule Name</label>
+    <input type="text" id="ruleName" placeholder="Example: Morning Mode">
+    <label>Trigger Condition</label>
+    <select id="trigger">
+      <option>Motion detected</option>
+      <option>Temperature above 28°C</option>
+      <option>Time reaches 10 PM</option>
+      <option>Manual activation</option>
+    </select>
+    <label>Action</label>
+    <select id="action">
+      <option>Turn ON Light</option>
+      <option>Turn OFF Light</option>
+      <option>Turn ON Thermostat</option>
+      <option>Turn OFF Thermostat</option>
+    </select>
+    <div class="modal-actions">
+      <button onclick="addRule()">Create Rule</button>
+      <button class="secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const devices = {
+  light: true,
+  thermo: false,
+  plug: false
+};
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => toast.style.display='none',2500);
+}
+
+function updateStats() {
+  document.getElementById('total').textContent = 3;
+  document.getElementById('online').textContent = 3;
+  document.getElementById('active').textContent =
+    Object.values(devices).filter(Boolean).length;
+  document.getElementById('ruleCount').textContent =
+    document.querySelectorAll('.rule').length;
+}
+
+function addActivity(message) {
+  const activity = document.getElementById('activity');
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  const title = document.createElement('span');
+  title.textContent = message;
+  const time = document.createElement('small');
+  time.textContent = new Date().toLocaleTimeString();
+  item.append(title,time);
+  activity.prepend(item);
+}
+
+function toggleDevice(name) {
+  devices[name] = !devices[name];
+  const button = document.getElementById(name+'Toggle');
+  button.textContent = devices[name] ? 'Turn OFF' : 'Turn ON';
+  button.classList.toggle('off',!devices[name]);
+
+  if(name !== 'plug') {
+    const status = document.getElementById(
+      name === 'light' ? 'lightStatus' : 'thermoStatus'
+    );
+    status.textContent = 'ONLINE';
+  }
+
+  const label = name === 'light' ? 'Living Room Light' :
+    name === 'thermo' ? 'Bedroom Thermostat' : 'Smart Plug';
+
+  const message = label + (devices[name] ? ' turned ON' : ' turned OFF');
+  addActivity(message);
+  showToast(message);
+  updateStats();
+}
+
+function setBrightness(value) {
+  document.getElementById('brightnessValue').textContent = value+'%';
+}
+
+function setTemperature(value) {
+  document.getElementById('tempValue').textContent = value+'°C';
+}
+
+function toggleRule(element) {
+  element.classList.toggle('on');
+  const enabled = element.classList.contains('on');
+  const name = element.parentElement.querySelector('h3').textContent;
+  showToast(name + (enabled ? ' enabled' : ' disabled'));
+  addActivity(name + (enabled ? ' enabled' : ' disabled'));
+}
+
+function openModal() {
+  document.getElementById('ruleModal').style.display='flex';
+}
+
+function closeModal() {
+  document.getElementById('ruleModal').style.display='none';
+}
+
+function addRule() {
+  const name = document.getElementById('ruleName').value.trim();
+  const trigger = document.getElementById('trigger').value;
+  const action = document.getElementById('action').value;
+
+  if(!name) {
+    showToast('Please enter a rule name');
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'card rule';
+
+  const content = document.createElement('div');
+  const heading = document.createElement('h3');
+  heading.textContent = '⚙ ' + name;
+  const description = document.createElement('p');
+  description.textContent = trigger + ' → ' + action;
+  content.append(heading,description);
+
+  const toggle = document.createElement('div');
+  toggle.className = 'switch on';
+  toggle.onclick = function() { toggleRule(this); };
+
+  card.append(content,toggle);
+  document.getElementById('rules').append(card);
+
+  addActivity('New automation rule created: '+name);
+  updateStats();
+  closeModal();
+  document.getElementById('ruleName').value='';
+  showToast('Automation rule created successfully!');
+}
+
+function navigate(page) {
+  document.querySelectorAll('.nav-item').forEach(item =>
+    item.classList.remove('active')
+  );
+  event.currentTarget.classList.add('active');
+  document.getElementById('pageTitle').textContent =
+    page === 'Dashboard' ? 'Smart Home Dashboard' : page;
+  if(page !== 'Dashboard') {
+    showToast(page+' section selected');
+  }
+}
+updateStats();
+</script>
+</body>
+</html>
